@@ -19,6 +19,22 @@ RUN apk add --no-cache \
     curl-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev
+	
+# Build geos
+ARG GEOS_VERSION=3.7.1
+RUN if test "${GEOS_VERSION}" != ""; then ( \
+    wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
+    && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
+    && rm -f geos-${GEOS_VERSION}.tar.bz2 \
+    && cd geos-${GEOS_VERSION} \
+    && ./configure --prefix=/usr --disable-static \
+    && make -j$(nproc) \
+    && make install \
+    && cp -P /usr/lib/libgeos*.so* /build_thirdparty/usr/lib \
+    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
+    && cd .. \
+    && rm -rf geos-${GEOS_VERSION} \
+    ); fi
 
 # Build openjpeg
 #ARG OPENJPEG_VERSION=2.3.1
@@ -86,7 +102,7 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-ARG GDAL_VERSION=v3.0.0
+ARG GDAL_VERSION=3.0.0
 ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE=yes
 RUN if test "${GDAL_VERSION}" = "master"; then \
@@ -96,16 +112,33 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/gdal/ $HOME/; \
-        echo "Finished"; \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
-        ccache -M 1G; \
+    && export GDAL_EXTRA_ARGS="" \
+    && if test "${GEOS_VERSION}" != ""; then \
+        export GDAL_EXTRA_ARGS="--with-geos ${GDAL_EXTRA_ARGS}"; \
     fi \
+    && if test "${XERCESC_VERSION}" != ""; then \
+        export GDAL_EXTRA_ARGS="--with-xerces ${GDAL_EXTRA_ARGS}"; \
+    fi \
+    && if test "${HDF4_VERSION}" != ""; then \
+        apk add --no-cache portablexdr-dev \
+        && export LDFLAGS="-lportablexdr ${LDFLAGS}" \
+        && export GDAL_EXTRA_ARGS="--with-hdf4 ${GDAL_EXTRA_ARGS}"; \
+    fi \
+    && if test "${HDF5_VERSION}" != ""; then \
+        export GDAL_EXTRA_ARGS="--with-hdf5 ${GDAL_EXTRA_ARGS}"; \
+    fi \
+    && if test "${NETCDF_VERSION}" != ""; then \
+        export GDAL_EXTRA_ARGS="--with-netcdf ${GDAL_EXTRA_ARGS}"; \
+    fi \
+    && if test "${SPATIALITE_VERSION}" != ""; then \
+        export GDAL_EXTRA_ARGS="--with-spatialite ${GDAL_EXTRA_ARGS}"; \
+    fi \
+    && if test "${POPPLER_DEV}" != ""; then \
+        export GDAL_EXTRA_ARGS="--with-poppler ${GDAL_EXTRA_ARGS}"; \
+    fi \
+    && echo ${GDAL_EXTRA_ARGS} \
     && mkdir gdal \
-    && wget -q https://github.com/OSGeo/gdal/archive/${GDAL_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/OSGeo/gdal/archive/v${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal/gdal \
     && ./configure --prefix=/usr --without-libtool \
@@ -114,6 +147,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --enable-lto \
+	    ${GDAL_EXTRA_ARGS} \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && if test "${RSYNC_REMOTE}" != ""; then \
