@@ -18,7 +18,8 @@ RUN apk add --no-cache \
     linux-headers \
     curl-dev \
     zlib-dev zstd-dev \
-    libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev
+    libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev \
+    && mkdir -p /build_thirdparty/usr/lib
 	
 # Build geos
 ARG GEOS_VERSION=3.7.1
@@ -198,7 +199,7 @@ RUN apk add --no-cache \
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
-#COPY --from=builder  /build_thirdparty/usr/ /usr/
+COPY --from=builder  /build_thirdparty/usr/ /usr/
 
 COPY --from=builder  /build_projgrids/usr/ /usr/
 
