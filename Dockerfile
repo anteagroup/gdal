@@ -211,4 +211,4 @@ COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
-RUN pip install pygdal=="${GDAL_VERSION}.*"
+RUN pip install --no-cache-dir pygdal=="`gdal-config --version`.*"
