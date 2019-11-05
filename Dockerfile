@@ -4,6 +4,7 @@
 # This file is available at the option of the licensee under:
 # Public domain
 # or licensed under X/MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
+# This file is a copy of "https://github.com/OSGeo/gdal", modified for using it with Python 3 and with GDAL 3.
 
 FROM alpine as builder
 
@@ -185,8 +186,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
 # Build final image
 FROM python:3-alpine as runner
 
-RUN date
-
 RUN apk add --no-cache \
         libstdc++ \
         sqlite-libs \
@@ -211,3 +210,5 @@ COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
 COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+
+RUN pip install pygdal=="${GDAL_VERSION}.*"
