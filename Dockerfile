@@ -149,7 +149,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
     --enable-lto \
-	    ${GDAL_EXTRA_ARGS} \
+    ${GDAL_EXTRA_ARGS} \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -211,4 +211,10 @@ COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
 COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
-RUN pip install --no-cache-dir pygdal=="`gdal-config --version`.*"
+RUN set -ex \
+  && apk add --no-cache --virtual .build-deps build-base gfortran \
+  # Install python packages
+  && pip install --no-cache-dir pygdal=="`gdal-config --version`.*" \
+  # Remove all non-required files
+  && apk del .build-deps \
+  && rm -rf /tmp/*
