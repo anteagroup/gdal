@@ -23,7 +23,7 @@ RUN apk add --no-cache \
     && mkdir -p /build_thirdparty/usr/lib
 	
 # Build geos
-ARG GEOS_VERSION=3.7.1
+ARG GEOS_VERSION=3.8.0
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
@@ -39,7 +39,7 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     ); fi
 
 # Build openjpeg
-#ARG OPENJPEG_VERSION=2.3.1
+# ARG OPENJPEG_VERSION=2.3.1
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     apk add --no-cache cmake \
     && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
@@ -50,15 +50,13 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
         -DCMAKE_INSTALL_PREFIX=/usr \
     && make -j$(nproc) \
     && make install \
-    && mkdir -p /build_thirdparty/usr/lib \
+    && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
     && apk del cmake \
     ); fi
-
-RUN apk add --no-cache rsync ccache
 
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
@@ -67,52 +65,28 @@ RUN \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
-ARG RSYNC_REMOTE
-
 # Build PROJ
-ARG PROJ_VERSION=6.2.0
+ARG PROJ_VERSION=6.2.1
 RUN mkdir proj \
-    && wget -q https://github.com/OSGeo/proj.4/archive/${PROJ_VERSION}.tar.gz -O - \
+    && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && ./autogen.sh \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        echo "Downloading cache..."; \
-        rsync -ra ${RSYNC_REMOTE}/proj/ $HOME/; \
-        echo "Finished"; \
-        export CC="ccache gcc"; \
-        export CXX="ccache g++"; \
-        export PROJ_DB_CACHE_DIR="$HOME/.ccache"; \
-        ccache -M 100M; \
-    fi \
     && ./configure --prefix=/usr --disable-static --enable-lto \
     && make -j$(nproc) \
     && make install \
     && make install DESTDIR="/build_proj" \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
-        echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/proj/; \
-        echo "Finished"; \
-        rm -rf $HOME/.ccache; \
-        unset CC; \
-        unset CXX; \
-    fi \
     && cd .. \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-ARG GDAL_VERSION=3.0.0
+ARG GDAL_VERSION=3.0.1
 ARG GDAL_RELEASE_DATE
-ARG GDAL_BUILD_IS_RELEASE=yes
 RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
-    fi \
-    && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
-        export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
     && export GDAL_EXTRA_ARGS="" \
     && if test "${GEOS_VERSION}" != ""; then \
@@ -148,19 +122,10 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    --enable-lto \
+    # --enable-lto
     ${GDAL_EXTRA_ARGS} \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
-    && if test "${RSYNC_REMOTE}" != ""; then \
-        ccache -s; \
-        echo "Uploading cache..."; \
-        rsync -ra --delete $HOME/.ccache ${RSYNC_REMOTE}/gdal/; \
-        echo "Finished"; \
-        rm -rf $HOME/.ccache; \
-        unset CC; \
-        unset CXX; \
-    fi \
     && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_version_changing/usr/include \
@@ -187,10 +152,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
 FROM python:3-alpine as runner
 
 RUN apk add --no-cache \
-        libstdc++ \
-        sqlite-libs \
-        libcurl \
-        zlib zstd-libs\
+        libstdc++ sqlite-libs libcurl zlib zstd-libs \
         libjpeg-turbo libpng openjpeg libwebp expat libpq \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
