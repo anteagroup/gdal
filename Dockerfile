@@ -19,9 +19,10 @@ RUN apk add --no-cache \
     linux-headers \
     curl-dev \
     zlib-dev zstd-dev \
-    libjpeg-turbo-dev libpng-dev libwebp-dev expat-dev postgresql-dev openjpeg-dev \
+    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
+    postgresql-dev \
     && mkdir -p /build_thirdparty/usr/lib
-	
+
 # Build geos
 ARG GEOS_VERSION=3.8.0
 RUN if test "${GEOS_VERSION}" != ""; then ( \
@@ -82,7 +83,7 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-ARG GDAL_VERSION=2.4.2
+ARG GDAL_VERSION=2.4.3
 ARG GDAL_RELEASE_DATE
 RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
@@ -176,7 +177,7 @@ COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN set -ex \
   && apk add --no-cache --virtual .build-deps build-base gfortran \
   # Install python packages
-  && pip install --no-cache-dir pygdal=="`gdal-config --version`.*" \
+  && pip install --no-cache-dir numpy GDAL=="`gdal-config --version`.*" \
   # Remove all non-required files
   && apk del .build-deps \
   && rm -rf /tmp/*
