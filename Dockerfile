@@ -177,7 +177,8 @@ COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 RUN set -ex \
   && apk add --no-cache --virtual .build-deps build-base gfortran \
   # Install python packages
-  && pip install --no-cache-dir numpy GDAL=="`gdal-config --version`.*" \
+  && pip install --no-cache-dir numpy \
+  && pip install --no-cache-dir GDAL=="`gdal-config --version`.*" \
   # Remove all non-required files
   && apk del .build-deps \
   && rm -rf /tmp/*
