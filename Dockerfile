@@ -12,7 +12,7 @@ FROM alpine as builder
 MAINTAINER Even Rouault <even.rouault@spatialys.com>
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
 # For GDAL
 RUN apk add --no-cache \
@@ -67,7 +67,7 @@ RUN \
     && rm -f *.zip
 
 # Build PROJ
-ARG PROJ_VERSION=6.2.1
+ARG PROJ_VERSION=6.3.1
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -83,7 +83,7 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-ARG GDAL_VERSION=2.4.3
+ARG GDAL_VERSION=2.4.4
 ARG GDAL_RELEASE_DATE
 RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
