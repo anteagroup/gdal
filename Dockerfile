@@ -17,7 +17,7 @@ RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconf
 # For GDAL
 RUN apk add --no-cache \
     linux-headers \
-    curl-dev \
+    curl-dev tiff-dev \
     zlib-dev zstd-dev \
     libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
     postgresql-dev \
@@ -67,7 +67,7 @@ RUN \
     && rm -f *.zip
 
 # Build PROJ
-ARG PROJ_VERSION=6.3.1
+ARG PROJ_VERSION=7.0.0
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
