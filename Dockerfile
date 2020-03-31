@@ -153,7 +153,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
 FROM python:3-alpine as runner
 
 RUN apk add --no-cache \
-        libstdc++ sqlite-libs libcurl zlib zstd-libs \
+        libstdc++ sqlite-libs libcurl tiff zlib zstd-libs \
         libjpeg-turbo libpng openjpeg libwebp expat libpq \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
