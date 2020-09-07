@@ -9,7 +9,7 @@
 FROM alpine as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
-MAINTAINER Even Rouault <even.rouault@spatialys.com>
+LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
 RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
@@ -39,35 +39,8 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     && rm -rf geos-${GEOS_VERSION} \
     ); fi
 
-# Build openjpeg
-# ARG OPENJPEG_VERSION=2.3.1
-RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
-    && tar xzf v${OPENJPEG_VERSION}.tar.gz \
-    && rm -f v${OPENJPEG_VERSION}.tar.gz \
-    && cd openjpeg-${OPENJPEG_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON  -DBUILD_STATIC_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-    && make -j$(nproc) \
-    && make install \
-    && rm -f /usr/lib/libopenjp2.so.2.3.0 \
-    && cp -P /usr/lib/libopenjp2*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf openjpeg-${OPENJPEG_VERSION} \
-    && apk del cmake \
-    ); fi
-
-ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
-RUN \
-    mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
-    && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
-    && rm -f *.zip
-
 # Build PROJ
-ARG PROJ_VERSION=7.1.0
+ARG PROJ_VERSION=7.1.1
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -83,7 +56,7 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-ARG GDAL_VERSION=3.1.1
+ARG GDAL_VERSION=3.1.3
 ARG GDAL_RELEASE_DATE
 RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
@@ -163,7 +136,7 @@ RUN apk add --no-cache \
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
-COPY --from=builder  /build_projgrids/usr/ /usr/
+# COPY --from=builder  /build_projgrids/usr/ /usr/
 
 COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
 COPY --from=builder  /build_proj/usr/include/ /usr/include/
