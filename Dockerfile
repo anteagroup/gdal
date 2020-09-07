@@ -12,7 +12,7 @@ FROM alpine as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget curl unzip -q make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
 
 # For GDAL
 RUN apk add --no-cache \
@@ -123,7 +123,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
        ;do rm $i; done)
 
 # Build final image
-FROM python:3-alpine as runner
+FROM python:alpine as runner
 
 RUN apk add --no-cache \
         libstdc++ sqlite-libs libcurl tiff zlib zstd-libs \
