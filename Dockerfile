@@ -43,7 +43,6 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     ); fi
 
 # Build PROJ
-ENV PROJ_NETWORK=ON
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -134,6 +133,7 @@ RUN apk add --no-cache \
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
 # COPY --from=builder  /build_projgrids/usr/ /usr/
+ENV PROJ_NETWORK=ON
 
 COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
 COPY --from=builder  /build_proj/usr/include/ /usr/include/
