@@ -12,7 +12,11 @@ FROM alpine as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget curl unzip make libtool autoconf automake pkgconfig g++ sqlite sqlite-dev
+RUN apk add --no-cache wget build-base libtool autoconf automake sqlite sqlite-dev
+
+ARG GEOS_VERSION=3.8.1
+ARG PROJ_VERSION=7.1.1
+ARG GDAL_VERSION=3.1.3
 
 # For GDAL
 RUN apk add --no-cache \
@@ -24,7 +28,6 @@ RUN apk add --no-cache \
     && mkdir -p /build_thirdparty/usr/lib
 
 # Build geos
-ARG GEOS_VERSION=3.8.1
 RUN if test "${GEOS_VERSION}" != ""; then ( \
     wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
@@ -40,7 +43,7 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     ); fi
 
 # Build PROJ
-ARG PROJ_VERSION=7.1.1
+ENV PROJ_NETWORK=ON
 RUN mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
@@ -56,13 +59,7 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-ARG GDAL_VERSION=3.1.3
-ARG GDAL_RELEASE_DATE
-RUN if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/OSGeo/gdal/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
-        export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
-    fi \
-    && export GDAL_EXTRA_ARGS="" \
+RUN export GDAL_EXTRA_ARGS="" \
     && if test "${GEOS_VERSION}" != ""; then \
         export GDAL_EXTRA_ARGS="--with-geos ${GDAL_EXTRA_ARGS}"; \
     fi \
@@ -96,7 +93,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
     --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    # --enable-lto
+    # --enable-lto \
     ${GDAL_EXTRA_ARGS} \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
