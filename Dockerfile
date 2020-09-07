@@ -12,7 +12,7 @@ FROM alpine as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget build-base libtool autoconf automake sqlite sqlite-dev
+RUN apk add --no-cache wget make libtool autoconf automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.8.1
 ARG PROJ_VERSION=7.1.1
