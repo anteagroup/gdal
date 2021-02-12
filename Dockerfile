@@ -14,7 +14,7 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 # Setup build env for PROJ
 RUN apk add --no-cache wget make libtool autoconf automake g++ sqlite sqlite-dev
 
-ARG GEOS_VERSION=3.9.0
+ARG GEOS_VERSION=3.9.1
 ARG PROJ_VERSION=7.2.1
 ARG GDAL_VERSION=3.2.1
 
