@@ -15,7 +15,7 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 RUN apk add --no-cache wget make libtool autoconf automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.9.1
-ARG PROJ_VERSION=7.2.1
+ARG PROJ_VERSION=8.0.0
 ARG GDAL_VERSION=3.2.1
 
 # For GDAL
@@ -121,7 +121,8 @@ RUN export GDAL_EXTRA_ARGS="" \
 # Build final image
 FROM python:alpine as runner
 
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
         libstdc++ sqlite-libs libcurl tiff zlib zstd-libs \
         libjpeg-turbo libpng openjpeg libwebp expat libpq \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
