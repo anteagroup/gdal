@@ -43,7 +43,7 @@ jobs:
           path: /tmp/.buildx-cache
           # Key is named differently to avoid collision
           key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-multi-buildx
+          restore-keys: ${{ runner.os }}-buildx
 
       - name: Login to ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
