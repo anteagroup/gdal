@@ -7,9 +7,11 @@ name: Docker
 
 on:
   push:
-    branches: [ master ]
-    # Publish semver tags as releases.
-    tags: [ 'v*' ]
+    branches:
+      - 'master'
+      - 'v*'
+    tags:
+      - 'v*.*.*'
   pull_request:
     branches: [ master ]
 
@@ -28,9 +30,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set branch name
+        id: vars
+        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          # Key is named differently to avoid collision
+          key: ${{ runner.os }}-multi-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-multi-buildx
 
       - name: Login to ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
@@ -45,6 +60,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=${{ steps.vars.outputs.short_ref == 'master' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
@@ -53,3 +70,13 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          # Note the mode=max here
+          # More: https://github.com/moby/buildkit#--export-cache-options
+          # And: https://github.com/docker/buildx#--cache-tonametypetypekeyvalue
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
