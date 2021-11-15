@@ -119,8 +119,7 @@ RUN export GDAL_EXTRA_ARGS="" \
        ;do rm $i; done)
 
 # Build final image
-ARG PYTHON_VERSION=3.9.8-alpine
-FROM python:${PYTHON_VERSION} as runner
+FROM python:3.9.8-alpine as runner
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
