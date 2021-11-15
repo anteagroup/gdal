@@ -12,9 +12,9 @@ FROM alpine as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget make libtool autoconf automake g++ sqlite sqlite-dev
+RUN apk add --no-cache wget make cmake libtool autoconf automake g++ sqlite sqlite-dev
 
-ARG GEOS_VERSION=3.9.1
+ARG GEOS_VERSION=3.10.1
 ARG PROJ_VERSION=8.2.0
 ARG GDAL_VERSION=3.4.0
 
@@ -47,8 +47,12 @@ RUN mkdir proj \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
-    && ./autogen.sh \
-    && ./configure --prefix=/usr --disable-static --enable-lto \
+    && cmake . \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DENABLE_IPO=ON \
+        -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install \
     && make install DESTDIR="/build_proj" \
@@ -86,9 +90,11 @@ RUN export GDAL_EXTRA_ARGS="" \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/v${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
-    && cd gdal/gdal \
-    && ./configure --prefix=/usr --without-libtool \
+    && cd gdal \
+     && ./autogen.sh \
+    && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
+    --with-liblzma \
     --with-proj=/usr \
     --with-libtiff=internal --with-rename-internal-libtiff-symbols \
     --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
@@ -96,7 +102,7 @@ RUN export GDAL_EXTRA_ARGS="" \
     ${GDAL_EXTRA_ARGS} \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
-    && cd ../.. \
+    && cd .. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_version_changing/usr/include \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
