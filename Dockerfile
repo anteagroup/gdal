@@ -33,7 +33,10 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
     && rm -f geos-${GEOS_VERSION}.tar.bz2 \
     && cd geos-${GEOS_VERSION} \
-    && ./configure --prefix=/usr --disable-static \
+    && cmake . \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DBUILD_TESTING=OFF \
     && make -j$(nproc) \
     && make install \
     && cp -P /usr/lib/libgeos*.so* /build_thirdparty/usr/lib \
@@ -91,7 +94,7 @@ RUN export GDAL_EXTRA_ARGS="" \
     && wget -q https://github.com/OSGeo/gdal/archive/v${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
-     && ./autogen.sh \
+    && ./autogen.sh \
     && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-liblzma \
