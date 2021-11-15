@@ -93,8 +93,8 @@ RUN export GDAL_EXTRA_ARGS="" \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/v${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
-    && cd gdal \
-    # && ./autogen.sh \
+    && cd gdal/gdal \
+    && ./autogen.sh \
     && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-liblzma \
@@ -105,7 +105,7 @@ RUN export GDAL_EXTRA_ARGS="" \
     ${GDAL_EXTRA_ARGS} \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
-    && cd .. \
+    && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_version_changing/usr/include \
     && mv /build/usr/lib                    /build_gdal_version_changing/usr \
