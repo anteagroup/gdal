@@ -94,7 +94,7 @@ RUN export GDAL_EXTRA_ARGS="" \
     && wget -q https://github.com/OSGeo/gdal/archive/v${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
     && cd gdal \
-    && ./autogen.sh \
+    # && ./autogen.sh \
     && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
     --with-hide-internal-symbols \
     --with-liblzma \
