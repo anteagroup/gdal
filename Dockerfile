@@ -14,7 +14,7 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 # Setup build env for PROJ
 RUN apk add --no-cache wget make cmake libtool autoconf automake g++ sqlite sqlite-dev
 
-ARG GEOS_VERSION=3.10.1
+ARG GEOS_VERSION=3.10.2
 ARG PROJ_VERSION=8.2.1
 ARG GDAL_VERSION=3.4.1
 
@@ -128,7 +128,7 @@ RUN export GDAL_EXTRA_ARGS="" \
        ;do rm $i; done)
 
 # Build final image
-FROM python:3.10.1-alpine as runner
+FROM python:3.10.2-alpine as runner
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
