@@ -133,7 +133,7 @@ FROM python:3.10.2-alpine as runner
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
         libstdc++ sqlite-libs libcurl tiff zlib zstd-libs \
-        libjpeg-turbo libpng openjpeg libwebp expat libpq \
+        libjpeg-turbo libpng openjpeg libwebp expat libpq openblas \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
     # Only libwebp.so is used by GDAL
@@ -155,7 +155,7 @@ COPY --from=builder  /build/usr/include/ /usr/include/
 COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
 
 RUN set -ex \
-  && apk add --no-cache --virtual .build-deps build-base gfortran \
+  && apk add --no-cache --virtual .build-deps build-base openblas-dev gfortran \
   # Install python packages
   && pip install --no-cache-dir numpy \
   && pip install --no-cache-dir GDAL=="`gdal-config --version`.*" \
