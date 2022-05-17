@@ -12,11 +12,12 @@ FROM alpine as builder
 LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 
 # Setup build env for PROJ
-RUN apk add --no-cache wget make cmake libtool autoconf automake g++ sqlite sqlite-dev
+RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.10.2
+ARG FILEGDB_VERSION=""
 ARG PROJ_VERSION=9.0.0
-ARG GDAL_VERSION=3.4.3
+ARG GDAL_VERSION=3.5.0
 
 # For GDAL
 RUN apk add --no-cache \
@@ -29,10 +30,10 @@ RUN apk add --no-cache \
 
 # Build geos
 RUN if test "${GEOS_VERSION}" != ""; then ( \
-    wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 \
-    && tar xjf geos-${GEOS_VERSION}.tar.bz2  \
-    && rm -f geos-${GEOS_VERSION}.tar.bz2 \
-    && cd geos-${GEOS_VERSION} \
+    mkdir geos \
+    && wget -q http://download.osgeo.org/geos/geos-${GEOS_VERSION}.tar.bz2 -O - \
+        | tar xj -C geos --strip-components=1  \
+    && cd geos \
     && cmake . \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/usr \
@@ -42,7 +43,20 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     && cp -P /usr/lib/libgeos*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
-    && rm -rf geos-${GEOS_VERSION} \
+    && rm -rf geos \
+    ); fi
+
+# Build File Geodatabase
+RUN if test "${FILEGDB_VERSION}" != ""; then ( \
+    mkdir filegdb \
+    && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_${FILEGDB_VERSION}/FileGDB_API_RHEL7_64.tar.gz -O - \
+        | tar xz -C filegdb --strip-components=1 \
+    && chown -R root:root filegdb \
+    && rm -rf filegdb/lib/libstdc++* \
+    && cp filegdb/lib/* /build_thirdparty/usr/lib \
+    && cp filegdb/lib/* /usr/lib \
+    && cp filegdb/include/* /usr/include \
+    && rm -rf filegdb \
     ); fi
 
 # Build PROJ
@@ -65,46 +79,22 @@ RUN mkdir proj \
     && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build GDAL
-RUN export GDAL_EXTRA_ARGS="" \
-    && if test "${GEOS_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-geos ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && if test "${XERCESC_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-xerces ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && if test "${HDF4_VERSION}" != ""; then \
+RUN if test "${HDF4_VERSION}" != ""; then \
         apk add --no-cache portablexdr-dev \
-        && export LDFLAGS="-lportablexdr ${LDFLAGS}" \
-        && export GDAL_EXTRA_ARGS="--with-hdf4 ${GDAL_EXTRA_ARGS}"; \
+        && export LDFLAGS="-lportablexdr ${LDFLAGS}"; \
     fi \
-    && if test "${HDF5_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-hdf5 ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && if test "${NETCDF_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-netcdf ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && if test "${SPATIALITE_VERSION}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-spatialite ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && if test "${POPPLER_DEV}" != ""; then \
-        export GDAL_EXTRA_ARGS="--with-poppler ${GDAL_EXTRA_ARGS}"; \
-    fi \
-    && echo ${GDAL_EXTRA_ARGS} \
     && mkdir gdal \
     && wget -q https://github.com/OSGeo/gdal/archive/v${GDAL_VERSION}.tar.gz -O - \
         | tar xz -C gdal --strip-components=1 \
-    && cd gdal/gdal \
-    && ./autogen.sh \
-    && ./configure --prefix=/usr --sysconfdir=/etc --without-libtool \
-    --with-hide-internal-symbols \
-    --with-liblzma \
-    --with-proj=/usr \
-    --with-libtiff=internal --with-rename-internal-libtiff-symbols \
-    --with-geotiff=internal --with-rename-internal-libgeotiff-symbols \
-    # --enable-lto \
-    ${GDAL_EXTRA_ARGS} \
+    && cd gdal \
+    && mkdir build && cd build && cmake .. \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DGDAL_USE_TIFF_INTERNAL=ON \
+        -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
+    # && (make -j$(nproc) multireadtest && cp apps/multireadtest /build/usr/bin) \
     && cd ../.. \
     && rm -rf gdal \
     && mkdir -p /build_gdal_version_changing/usr/include \
@@ -142,7 +132,6 @@ RUN apk upgrade --no-cache \
 # Order layers starting with less frequently varying ones
 COPY --from=builder  /build_thirdparty/usr/ /usr/
 
-# COPY --from=builder  /build_projgrids/usr/ /usr/
 ENV PROJ_NETWORK=ON
 
 COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
