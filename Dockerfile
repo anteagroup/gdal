@@ -14,10 +14,10 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 # Setup build env for PROJ
 RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
-ARG GEOS_VERSION=3.11.0
+ARG GEOS_VERSION=3.11.1
 ARG FILEGDB_VERSION=""
 ARG PROJ_VERSION=9.1.0
-ARG GDAL_VERSION=3.5.3
+ARG GDAL_VERSION=3.6.0
 
 # For GDAL
 RUN apk add --no-cache \
