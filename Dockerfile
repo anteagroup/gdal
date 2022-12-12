@@ -122,7 +122,7 @@ FROM python:3.10.9-alpine as runner
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
-        libstdc++ sqlite-libs libcurl tiff zlib zstd-libs \
+        libstdc++ sqlite-libs libcurl tiff zlib zstd-libs lz4 \
         libjpeg-turbo libpng openjpeg libwebp expat libpq openblas \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*
     && rm -f /usr/lib/libturbojpeg.so* \
