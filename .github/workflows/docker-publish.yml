@@ -35,7 +35,7 @@ jobs:
 
       - name: Set branch name
         id: vars
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+        run: echo "short_ref=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
       # - name: Set up QEMU
       #   uses: docker/setup-qemu-action@v2
