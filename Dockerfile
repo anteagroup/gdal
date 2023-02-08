@@ -15,7 +15,6 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.11.1
-ARG FILEGDB_VERSION=""
 ARG PROJ_VERSION=9.1.1
 ARG GDAL_VERSION=3.6.2
 
@@ -44,19 +43,6 @@ RUN if test "${GEOS_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf geos \
-    ); fi
-
-# Build File Geodatabase
-RUN if test "${FILEGDB_VERSION}" != ""; then ( \
-    mkdir filegdb \
-    && wget -q https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_${FILEGDB_VERSION}/FileGDB_API_RHEL7_64.tar.gz -O - \
-        | tar xz -C filegdb --strip-components=1 \
-    && chown -R root:root filegdb \
-    && rm -rf filegdb/lib/libstdc++* \
-    && cp filegdb/lib/* /build_thirdparty/usr/lib \
-    && cp filegdb/lib/* /usr/lib \
-    && cp filegdb/include/* /usr/include \
-    && rm -rf filegdb \
     ); fi
 
 # Build PROJ
