@@ -104,7 +104,7 @@ RUN if test "${HDF4_VERSION}" != ""; then \
        ;do rm $i; done)
 
 # Build final image
-FROM python:3.10.9-alpine as runner
+FROM python:3.10.10-alpine as runner
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
