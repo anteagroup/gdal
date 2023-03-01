@@ -15,7 +15,7 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.11.1
-ARG PROJ_VERSION=9.1.1
+ARG PROJ_VERSION=9.2.0
 ARG GDAL_VERSION=3.6.2
 
 # For GDAL
