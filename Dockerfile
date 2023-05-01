@@ -16,7 +16,7 @@ RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.11.2
 ARG PROJ_VERSION=9.2.0
-ARG GDAL_VERSION=3.6.3
+ARG GDAL_VERSION=3.6.4
 
 # For GDAL
 RUN apk add --no-cache \
@@ -104,7 +104,7 @@ RUN if test "${HDF4_VERSION}" != ""; then \
        ;do rm $i; done)
 
 # Build final image
-FROM python:3.10.10-alpine as runner
+FROM python:3.10.11-alpine as runner
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
