@@ -16,7 +16,7 @@ RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
 ARG GEOS_VERSION=3.11.2
 ARG PROJ_VERSION=9.2.0
-ARG GDAL_VERSION=3.6.4
+ARG GDAL_VERSION=3.7.0
 
 # For GDAL
 RUN apk add --no-cache \
