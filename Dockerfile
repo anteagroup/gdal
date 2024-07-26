@@ -14,9 +14,9 @@ LABEL maintainer="Even Rouault <even.rouault@spatialys.com>"
 # Setup build env for PROJ
 RUN apk add --no-cache wget make cmake libtool automake g++ sqlite sqlite-dev
 
-ARG GEOS_VERSION=3.12.1
-ARG PROJ_VERSION=9.3.0
-ARG GDAL_VERSION=3.8.0
+ARG GEOS_VERSION=3.12.2
+ARG PROJ_VERSION=9.4.1
+ARG GDAL_VERSION=3.9.1
 
 # For GDAL
 RUN apk add --no-cache \
@@ -104,7 +104,7 @@ RUN if test "${HDF4_VERSION}" != ""; then \
        ;do rm $i; done)
 
 # Build final image
-FROM python:3.11.6-alpine as runner
+FROM python:3.11.9-alpine as runner
 
 RUN apk upgrade --no-cache \
     && apk add --no-cache \
